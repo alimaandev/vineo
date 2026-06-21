@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import AnimationProvider from "./components/providers/AnimationProvider";
-
-
+import { ClerkProvider, SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
 
 const geistSans = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap"
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -22,12 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable}  h-full antialiased`}
-    >
+    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <AnimationProvider>{children}</AnimationProvider>
+        <ClerkProvider  afterSignOutUrl="/">
+          <AnimationProvider>{children}</AnimationProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

@@ -1,6 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import {
+
+  SignOutButton,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 
 export default function Navbar() {
   return (
@@ -22,13 +29,18 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <button className="hidden sm:block px-4 py-2 text-sm">
-              Sign In
-            </button>
-
-            <button className="rounded-xl bg-white text-black px-5 py-2.5 text-sm font-medium">
-              Start Free
-            </button>
+           
+            <SignInButton forceRedirectUrl="" mode="modal">
+                <button className="text-text-secondary">
+                  Sign in
+                </button>
+              </SignInButton>
+             <SignUpButton forceRedirectUrl="/dashboard" mode="modal">
+                <button className="bg-white text-black px-4 py-2 rounded-xl">
+                  Get Started
+                </button>
+              </SignUpButton>
+            
           </div>
         </div>
       </div>
