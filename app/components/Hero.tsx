@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 
 export default function Hero() {
@@ -29,7 +29,7 @@ export default function Hero() {
         <div className="mt-10 flex justify-center gap-4">
           <StyledWrapper>
       <button className="Btn-Container">
-        <span className="text">let's go!</span>
+        <span className="text">let&apos;s go!</span>
         <span className="icon-Container">
           <svg width={16} height={19} viewBox="0 0 16 19" fill="nones" xmlns="http://www.w3.org/2000/svg">
             <circle cx="1.61321" cy="1.61321" r="1.5" fill="black" />

@@ -3,10 +3,10 @@
 import Link from "next/link";
 import {
 
-  SignOutButton,
+
   SignInButton,
   SignUpButton,
-  UserButton,
+
 } from "@clerk/nextjs";
 
 export default function Navbar() {
@@ -30,7 +30,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3">
            
-            <SignInButton forceRedirectUrl="" mode="modal">
+            <SignInButton forceRedirectUrl="/dashboard" mode="modal">
                 <button className="text-text-secondary">
                   Sign in
                 </button>

@@ -1,0 +1,125 @@
+// Prisma schema for Vineo dashboard
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MemberStatus {
+  AVAILABLE
+  IN_DEEP_WORK
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  IN_REVIEW
+  COMPLETED
+}
+
+enum ProjectEventType {
+  CREATED
+  STATUS_CHANGED
+}
+
+model Workspace {
+  id        String            @id @default(cuid())
+  name      String
+  createdAt DateTime          @default(now())
+  members   WorkspaceMember[]
+  clients   Client[]
+  projects  Project[]
+  events    ProjectEvent[]
+
+  settings WorkspaceSettings?
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+
+  // Clerk user id
+  userId String
+  role   WorkspaceRole @default(MEMBER)
+  status MemberStatus  @default(AVAILABLE)
+
+  createdAt     DateTime  @default(now())
+  projectsOwned Project[] @relation("ProjectsOwnedBy")
+}
+
+model WorkspaceSettings {
+  id          String    @id @default(cuid())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String    @unique
+
+  notificationsEnabled Boolean  @default(true)
+  createdAt            DateTime @default(now())
+}
+
+model Client {
+  id          String    @id @default(cuid())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+
+  name    String
+  email   String?
+  company String?
+  notes   String?
+
+  createdAt DateTime  @default(now())
+  projects  Project[]
+
+  @@index([workspaceId])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId String
+
+  ownerMember   WorkspaceMember? @relation("ProjectsOwnedBy", fields: [ownerMemberId], references: [id])
+  ownerMemberId String?
+
+  name        String
+  status      ProjectStatus @default(ACTIVE)
+  dueDate     DateTime?
+  description String?
+
+  createdAt DateTime       @default(now())
+  events    ProjectEvent[]
+
+  @@index([workspaceId])
+  @@index([clientId])
+}
+
+model ProjectEvent {
+  id String @id @default(cuid())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  type      ProjectEventType
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  @@index([workspaceId, projectId])
+}
+
+// add the missing opposite relation on Workspace

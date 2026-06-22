@@ -8,7 +8,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       
       {/* Main area takes remaining width, flex-col to stack topbar and content */}
       <div className="flex-1 flex flex-col min-w-0 ml-[240px]">
-        <Topbar />
+        {/* Page sets its own title/subtitle via data attributes */}
+        <Topbar title={(children as any)?.props?.title ?? "Dashboard"} subtitle={(children as any)?.props?.subtitle ?? "Overview"} />
+
+
         
         {/* Scrollable content area with internal padding */}
         <main className="flex-1 overflow-y-auto p-8">
