@@ -1,125 +1,115 @@
-// Prisma schema for Vineo dashboard
+// schema.prisma – generated Prisma data model for the Agency Client Portal SaaS
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-enum WorkspaceRole {
-  OWNER
-  ADMIN
-  MEMBER
-}
+/**
+ * Core models
+ */
+model User {
+  // Reports owned by the user
+  reports   Report[]
+  id        String        @id @default(cuid())
+  email     String        @unique
+  name      String?
+  password  String        // hashed password
+  role      String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-enum MemberStatus {
-  AVAILABLE
-  IN_DEEP_WORK
-}
-
-enum ProjectStatus {
-  ACTIVE
-  ON_HOLD
-  IN_REVIEW
-  COMPLETED
-}
-
-enum ProjectEventType {
-  CREATED
-  STATUS_CHANGED
-}
-
-model Workspace {
-  id        String            @id @default(cuid())
-  name      String
-  createdAt DateTime          @default(now())
-  members   WorkspaceMember[]
-  clients   Client[]
-  projects  Project[]
-  events    ProjectEvent[]
-
-  settings WorkspaceSettings?
-}
-
-model WorkspaceMember {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  workspaceId String
-
-  // Clerk user id
-  userId String
-  role   WorkspaceRole @default(MEMBER)
-  status MemberStatus  @default(AVAILABLE)
-
-  createdAt     DateTime  @default(now())
-  projectsOwned Project[] @relation("ProjectsOwnedBy")
-}
-
-model WorkspaceSettings {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  workspaceId String    @unique
-
-  notificationsEnabled Boolean  @default(true)
-  createdAt            DateTime @default(now())
-}
-
-model Client {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  workspaceId String
-
-  name    String
-  email   String?
-  company String?
-  notes   String?
-
-  createdAt DateTime  @default(now())
-  projects  Project[]
-
-  @@index([workspaceId])
+  // Relations
+  projects   Project[]     @relation("UserProjects")
+  teams     TeamMember[]
+  analytics  AnalyticsEvent[]
+  settings   Settings?
 }
 
 model Project {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  workspaceId String
-
-  client   Client @relation(fields: [clientId], references: [id])
-  clientId String
-
-  ownerMember   WorkspaceMember? @relation("ProjectsOwnedBy", fields: [ownerMemberId], references: [id])
-  ownerMemberId String?
-
-  name        String
-  status      ProjectStatus @default(ACTIVE)
-  dueDate     DateTime?
+  id          String        @id @default(cuid())
+  title       String
   description String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  createdAt DateTime       @default(now())
-  events    ProjectEvent[]
-
-  @@index([workspaceId])
-  @@index([clientId])
+  // Relations
+  ownerId   String
+  owner     User          @relation("UserProjects", fields: [ownerId], references: [id])
+  // teams     TeamMember[] // removed for now
+  analytics AnalyticsEvent[]
 }
 
-model ProjectEvent {
-  id String @id @default(cuid())
+/**
+ * Join table for many‑to‑many between Users and Teams
+ */
+model TeamMember {
+  id       String   @id @default(cuid())
+  userId   String
+  teamId   String
+  role     String?  // e.g., "admin", "member"
+  joinedAt DateTime @default(now())
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  workspaceId String
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
-  project   Project @relation(fields: [projectId], references: [id])
-  projectId String
-
-  type      ProjectEventType
-  metadata  Json?
-  createdAt DateTime         @default(now())
-
-  @@index([workspaceId, projectId])
+  @@unique([userId, teamId])
 }
 
-// add the missing opposite relation on Workspace
+model Team {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  members   TeamMember[]
+  // No direct project link; projects reference the owning team via a separate relation if needed.
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  type      String   // e.g., "page_view", "click", "login"
+  payload   Json?    // any additional data
+  createdAt DateTime @default(now())
+
+  // Relations (nullable foreign keys)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  // teamId    String?
+  // team      Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+}
+
+model Settings {
+  id                    String   @id @default(cuid())
+  preferences           Json?
+  notificationsEnabled  Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relation – one-to-one with User
+  userId   String   @unique
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Report model for analytics
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  data      Json?    // raw chart data (array of objects)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Optional owner
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
