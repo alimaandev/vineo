@@ -21,7 +21,7 @@ export function Topbar({
 
       <div className="flex items-center gap-6">
         <div className="text-xs text-[#8A8A93] font-medium">
-          Today,  {today.toLocaleDateString()}
+          Today,  {today.toLocaleDateString()}, <UserButton />
         </div>
         <UserButton />
       </div>

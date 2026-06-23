@@ -17,9 +17,7 @@ const TeamPage: React.FC = () => (
         <TeamMemberCard
           key={member.id}
           name={member.name}
-          role={member.role}
-          avatarUrl={member.avatar}
-        />
+          role={member.role} id={''}        />
       ))}
     </div>
   </div>

@@ -25,7 +25,7 @@ export default function Navbar() {
           <nav className="hidden md:flex items-center gap-8 text-text-secondary">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
-            <a href="#testimonials">Testimonials</a>
+            <a href="#contact">Contact</a>
           </nav>
 
           <div className="flex items-center gap-3">

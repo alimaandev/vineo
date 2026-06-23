@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import supabase from '@/lib/supabase';
 
 // Assume authentication middleware provides userId in request headers or session
 // For simplicity, we extract userId from the Authorization header as a Bearer token containing the user ID.
@@ -21,16 +21,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    const settings = await prisma.settings.findUnique({
-      where: { userId },
-    });
-    if (!settings) {
-      // Return empty defaults if not found
-      return NextResponse.json({});
+    const { data: settings, error } = await supabase
+      .from('Settings')
+      .select('*')
+      .eq('userId', userId)
+      .single();
+    if (error && error.code !== 'PGRST116') { // no rows error
+      console.error('Supabase GET settings error:', error);
+      return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
     }
-    return NextResponse.json(settings);
+    return NextResponse.json(settings ?? {});
   } catch (error) {
-    console.error('GET settings error:', error);
+    console.error('GET settings exception:', error);
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
@@ -43,15 +45,18 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    // Expect body to be a partial settings object, e.g., { theme: 'dark' }
-    const updatedSettings = await prisma.settings.upsert({
-      where: { userId },
-      update: body,
-      create: { userId, ...body },
-    });
+    // Upsert using Supabase
+    const { data: updatedSettings, error } = await supabase
+      .from('Settings')
+      .upsert({ userId, ...body }, { onConflict: 'userId' })
+      .single();
+    if (error) {
+      console.error('Supabase PATCH settings error:', error);
+      return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+    }
     return NextResponse.json(updatedSettings);
   } catch (error) {
-    console.error('PATCH settings error:', error);
+    console.error('PATCH settings exception:', error);
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }

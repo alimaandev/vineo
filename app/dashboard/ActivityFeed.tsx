@@ -1,16 +1,48 @@
-"use client";
+"use client"
 
 import { motion } from "framer-motion";
-import { CheckCircle2, MessageSquare, FileText, DollarSign } from "lucide-react";
+import { Clock, Hash } from "lucide-react";
+import { Key } from "react";
 
-const activities = [
-  { icon: FileText, text: "New project \"Brand Redesign\" created", time: "2m ago", color: "text-[#9D4EDD]" },
-  { icon: CheckCircle2, text: "Task \"Update UI components\" completed", time: "14m ago", color: "text-[#00F0FF]" },
-  { icon: MessageSquare, text: "Client feedback received on Wireframes", time: "1h ago", color: "text-[#F4F4F6]" },
-  { icon: DollarSign, text: "Invoice #1082 marked as paid", time: "3h ago", color: "text-[#00F0FF]" },
-];
+function timeAgo(date: Date) {
+  const diffMs = Date.now() - date.getTime();
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  return `${day}d ago`;
+}
 
-export function ActivityFeed() {
+function activityText(type: string) {
+  // Generic, since we don't know your exact event taxonomy.
+  switch (type) {
+    case "page_view":
+      return "Page view recorded";
+    case "login":
+      return "User logged in";
+    case "click":
+      return "Click event recorded";
+    default:
+      return `Event received: ${type}`;
+  }
+}
+
+export async function ActivityFeed() {
+  // Supabase client singleton
+  const supabase = (await import('@/lib/supabase')).default;
+
+  const { data: events, error } = await supabase
+    .from('analytics_event')
+    .select('id, type, createdAt')
+    .order('createdAt', { ascending: false })
+    .limit(8);
+
+  // Fallback to empty list on error
+  const safeEvents = events ?? [];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -19,29 +51,36 @@ export function ActivityFeed() {
       className="bg-[#121216] border border-[#222227] rounded-xl p-6 flex flex-col"
     >
       <h3 className="text-sm font-medium text-[#F4F4F6] mb-6">Recent Activity</h3>
-      
+
       <div className="flex-1 space-y-0">
-        {activities.map((item, i) => (
-          <div key={i} className="flex gap-4 group cursor-default">
-            {/* Timeline line */}
-            <div className="flex flex-col items-center">
-              <div className={`p-1.5 rounded-md bg-[#0A0A0C] border border-[#222227] ${item.color} transition-colors group-hover:border-[#8A8A93]/30`}>
-                <item.icon size={14} />
-              </div>
-              {i < activities.length - 1 && (
-                <div className="w-px flex-1 bg-[#222227] my-2" />
-              )}
-            </div>
-            
-            {/* Content */}
-            <div className="pb-6">
-              <p className="text-sm text-[#F4F4F6]/90 leading-relaxed">
-                {item.text}
-              </p>
-              <p className="text-xs text-[#8A8A93] mt-1">{item.time}</p>
-            </div>
+        {safeEvents.length === 0 ? (
+          <div className="text-sm text-[#8A8A93] py-6">
+            No analytics activity yet.
           </div>
-        ))}
+        ) : (
+          safeEvents.map((e: { id: Key | null | undefined; type: string; createdAt: string | number | Date; }) => (
+            <div key={e.id} className="flex gap-4 group cursor-default">
+              <div className="flex flex-col items-center">
+                <div className="p-1.5 rounded-md bg-[#0A0A0C] border border-[#222227] text-[#00F0FF] transition-colors group-hover:border-[#8A8A93]/30">
+                  <Hash size={14} />
+                </div>
+               {e.id !== safeEvents[safeEvents.length - 1]?.id && (
+                  <div className="w-px flex-1 bg-[#222227] my-2" />
+                )}
+              </div>
+
+              <div className="pb-6">
+                <p className="text-sm text-[#F4F4F6]/90 leading-relaxed">
+                  {activityText(e.type)}
+                </p>
+                <p className="text-xs text-[#8A8A93] mt-1 flex items-center gap-2">
+                  <Clock size={12} />
+                  {timeAgo(new Date(e.createdAt))}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </motion.div>
   );

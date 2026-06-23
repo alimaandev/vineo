@@ -1,6 +1,6 @@
 // app/api/projects/route.ts – CRUD API for Project model using Prisma
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import supabase from '@/lib/supabase';
 
 // Helper to extract userId – placeholder (real auth should replace this)
 function getUserId(request: Request): string | null {
@@ -13,7 +13,11 @@ function getUserId(request: Request): string | null {
 // GET /api/projects – list all projects (optionally filter by owner)
 export async function GET(request: Request) {
   try {
-    const projects = await prisma.project.findMany({ orderBy: { createdAt: 'desc' } });
+    const { data: projects, error } = await supabase
+      .from('Project')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    if (error) throw error;
     return NextResponse.json({ projects });
   } catch (e) {
     console.error(e);

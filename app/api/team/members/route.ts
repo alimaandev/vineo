@@ -1,11 +1,14 @@
 // app/api/team/members/route.ts
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import supabase from '@/lib/supabase';
 
 // GET /api/team/members - list all team members
 export async function GET(request: Request) {
   try {
-    const members = await prisma.teamMember.findMany();
+    const { data: members, error } = await supabase
+    .from('TeamMember')
+    .select('*');
+  if (error) throw error;
     return NextResponse.json(members);
   } catch (error) {
     console.error('Error fetching team members:', error);
@@ -17,7 +20,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const newMember = await prisma.teamMember.create({ data });
+    const { data: newMember, error } = await supabase
+      .from('TeamMember')
+      .insert(data)
+      .single();
+    if (error) throw error;
     return NextResponse.json(newMember, { status: 201 });
   } catch (error) {
     console.error('Error creating team member:', error);

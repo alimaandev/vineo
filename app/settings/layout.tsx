@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css"
 import AnimationProvider from "../components/providers/AnimationProvider";
-import Navbar from "../components/Navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Inter({
@@ -24,7 +23,6 @@ export default function SettingsLayout({
       <body className="min-h-full flex flex-col">
         <ClerkProvider afterSignOutUrl="/">
           <AnimationProvider>
-            <Navbar />
             <main className="flex-1 pt-24 px-6 max-w-7xl mx-auto">
               {children}
             </main>

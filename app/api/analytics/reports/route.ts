@@ -1,6 +1,6 @@
 // app/api/analytics/reports/route.ts – CRUD API for analytics reports using Prisma
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import supabase from '@/lib/supabase';
 
 // GET /api/analytics/reports – list all reports for the authenticated user (placeholder: no auth)
 export async function GET() {

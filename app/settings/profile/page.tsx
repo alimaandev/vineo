@@ -1,6 +1,8 @@
+"use client"
+
 import { useState } from 'react';
-import { useRouter } from 'next/router';
-import { updateUserProfile } from '@/lib/api'; // Adjust import path as needed
+import { useRouter } from 'next/navigation';
+//import { updateUserProfile } from '@/lib/api'; // Adjust import path as needed
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -66,3 +68,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+function updateUserProfile(arg0: { name: string; email: string; }) {
+  throw new Error('Function not implemented.');
+}
+

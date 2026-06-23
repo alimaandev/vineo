@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
-import Navbar from "@/app/components/Navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Inter({
@@ -22,7 +21,6 @@ export default function TeamLayout({
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <ClerkProvider afterSignOutUrl="/">
-          <Navbar />
           <main className="flex-1 pt-24">{children}</main>
         </ClerkProvider>
       </body>
