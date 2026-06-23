@@ -1,13 +1,15 @@
+// app/dashboard/page.tsx – Dashboard page component
 import { DashboardLayout } from "./DashboardLayout";
 import { StatCard } from "./StatCard";
 import { AnalyticsPanel } from "./AnalyticsPanel";
 import { ActivityFeed } from "./ActivityFeed";
+import { getClerkUserId } from "../../utils/clerk";
+import supabase from "../../lib/supabase";
 
+/**
+ * Fetch dashboard statistics for the authenticated user.
+ */
 async function getDashboardStats() {
-  import { getClerkUserId } from '@/utils/clerk';
-
-async function getDashboardStats() {
-  const supabase = (await import("@/lib/supabase")).default;
   const userId = getClerkUserId();
 
   const [
@@ -32,7 +34,10 @@ async function getDashboardStats() {
       ])
       .eq("user_id", userId),
 
-    supabase.from("report").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    supabase
+      .from("report")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId),
   ]);
 
   return {
@@ -43,49 +48,7 @@ async function getDashboardStats() {
 }
 
 export default async function DashboardPage() {
-  const {
-    activeProjectsCount,
-    completedTasksCount,
-    revenueValue,
-  } = await getDashboardStats();
-
-
-  const [
-    { count: activeProjectsCount },
-    { count: completedTasksCount },
-    { count: reportsCount },
-  ] = await Promise.all([
-    supabase
-      .from("Project")
-      .select("id", { count: "exact", head: true })
-      .eq("isActive", true),
-
-    supabase
-      .from("analytics_event")
-      .select("id", { count: "exact", head: true })
-      .in("type", [
-        "task_completed",
-        "task_complete",
-        "completed_task",
-        "taskDone",
-      ]),
-
-    supabase.from("Report").select("id", { count: "exact", head: true }),
-  ]);
-
-  return {
-    activeProjectsCount: activeProjectsCount ?? 0,
-    completedTasksCount: completedTasksCount ?? 0,
-    revenueValue: reportsCount ?? 0,
-  };
-}
-
-export default async function DashboardPage() {
-  const {
-    activeProjectsCount,
-    completedTasksCount,
-    revenueValue,
-  } = await getDashboardStats();
+  const { activeProjectsCount, completedTasksCount, revenueValue } = await getDashboardStats();
 
   const stats = [
     {
