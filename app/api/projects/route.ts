@@ -1,22 +1,17 @@
 // app/api/projects/route.ts – CRUD API for Project model using Prisma
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
+import { getClerkUserId } from '@/utils/clerk';
 
-// Helper to extract userId – placeholder (real auth should replace this)
-function getUserId(request: Request): string | null {
-  const auth = request.headers.get('authorization');
-  if (!auth) return null;
-  const parts = auth.split(' ');
-  return parts.length === 2 ? parts[1] : null;
-}
-
-// GET /api/projects – list all projects (optionally filter by owner)
+// GET /api/projects – list all projects for the authenticated user
 export async function GET(request: Request) {
   try {
+    const userId = getClerkUserId();
     const { data: projects, error } = await supabase
-      .from('Project')
+      .from('project')
       .select('*')
-      .order('createdAt', { ascending: false });
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
     if (error) throw error;
     return NextResponse.json({ projects });
   } catch (e) {
@@ -28,8 +23,13 @@ export async function GET(request: Request) {
 // POST /api/projects – create a new project (expects title & optional description)
 export async function POST(request: Request) {
   try {
+    const userId = getClerkUserId();
     const { title, description } = await request.json();
-    const created = await prisma.project.create({ data: { title, description } });
+    const { data: created, error } = await supabase
+      .from('project')
+      .insert({ title, description, user_id: userId })
+      .single();
+    if (error) throw error;
     return NextResponse.json(created, { status: 201 });
   } catch (e) {
     console.error(e);
@@ -43,8 +43,15 @@ export async function PUT(request: Request) {
   const id = url.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
   try {
+    const userId = getClerkUserId();
     const { title, description } = await request.json();
-    const updated = await prisma.project.update({ where: { id }, data: { title, description } });
+    const { data: updated, error } = await supabase
+      .from('project')
+      .update({ title, description })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+    if (error) throw error;
     return NextResponse.json(updated);
   } catch (e) {
     console.error(e);
@@ -58,7 +65,13 @@ export async function DELETE(request: Request) {
   const id = url.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
   try {
-    await prisma.project.delete({ where: { id } });
+    const userId = getClerkUserId();
+    const { error } = await supabase
+      .from('project')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+    if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error(e);

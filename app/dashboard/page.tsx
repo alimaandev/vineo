@@ -4,7 +4,51 @@ import { AnalyticsPanel } from "./AnalyticsPanel";
 import { ActivityFeed } from "./ActivityFeed";
 
 async function getDashboardStats() {
+  import { getClerkUserId } from '@/utils/clerk';
+
+async function getDashboardStats() {
   const supabase = (await import("@/lib/supabase")).default;
+  const userId = getClerkUserId();
+
+  const [
+    { count: activeProjectsCount },
+    { count: completedTasksCount },
+    { count: reportsCount },
+  ] = await Promise.all([
+    supabase
+      .from("project")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true)
+      .eq("user_id", userId),
+
+    supabase
+      .from("analytics_event")
+      .select("id", { count: "exact", head: true })
+      .in("type", [
+        "task_completed",
+        "task_complete",
+        "completed_task",
+        "taskDone",
+      ])
+      .eq("user_id", userId),
+
+    supabase.from("report").select("id", { count: "exact", head: true }).eq("user_id", userId),
+  ]);
+
+  return {
+    activeProjectsCount: activeProjectsCount ?? 0,
+    completedTasksCount: completedTasksCount ?? 0,
+    revenueValue: reportsCount ?? 0,
+  };
+}
+
+export default async function DashboardPage() {
+  const {
+    activeProjectsCount,
+    completedTasksCount,
+    revenueValue,
+  } = await getDashboardStats();
+
 
   const [
     { count: activeProjectsCount },

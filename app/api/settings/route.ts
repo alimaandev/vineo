@@ -5,13 +5,11 @@ import supabase from '@/lib/supabase';
 // For simplicity, we extract userId from the Authorization header as a Bearer token containing the user ID.
 // In a real app, replace this with your auth solution (e.g., next-auth, JWT, etc.).
 
-function getUserId(request: Request): string | null {
-  const auth = request.headers.get('authorization');
-  if (!auth) return null;
-  const parts = auth.split(' ');
-  if (parts.length !== 2) return null;
-  // Here we just return the token part as userId placeholder
-  return parts[1];
+import { getClerkUserId } from '@/utils/clerk';
+
+function getUserId(request: Request): string {
+  // Use Clerk server‑side helper to get the authenticated user ID
+  return getClerkUserId(request);
 }
 
 export async function GET(request: Request) {
